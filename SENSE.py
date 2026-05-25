@@ -94,7 +94,7 @@ def main(target_language: str):
     shot_configs = [0, 1, 3, 5]
     
     for n_shots in shot_configs:
-        run(f'aya_{n_shots}_shot_sense', n_shots, eng_lines, tgt_lines, target_language, directory)
+        run(f'aya_{n_shots}_shot.txt', n_shots, eng_lines, tgt_lines, target_language, directory)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

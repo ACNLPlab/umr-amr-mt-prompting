@@ -6,33 +6,23 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 import json
 
-checkpoint = "mistralai/Mistral-7B-Instruct-v0.3"
+model_id = "google/gemma-3-12b-it"
+token = "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"
 
-tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-model = AutoModelForCausalLM.from_pretrained(checkpoint, torch_dtype="auto", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(
+    model_id, torch_dtype="auto", device_map="auto", token=token
+)
 
 ##### OUTPUT CLEANING #####
 def extract_translated_text(response: str, target_language: str) -> str:
-    blocks = response.split("Translate the following")
-    block = blocks[-1]  # last block is the model's actual translation
-    lines = block.strip().splitlines()
-
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith(f"{target_language}:"):
-            content = stripped[len(f"{target_language}:"):].strip()
-            if content:
-                return content
-            else:
-                full_remaining = "\n".join(lines[i:])
-                return full_remaining.replace(f"{target_language}:", "", 1).strip()
-
-    return ""
+    response = response.split(f"{target_language}:\nmodel", 1)[1].strip().splitlines()[0]
+    return response
 
 ##### DATA PRE-PROCESSING #####
 def load_data(target_language: str):
     prefix = 'chin' if target_language.lower() == 'mandarin' else target_language.lower()[:4]
-    base_path = f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data'
+    base_path = f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data'
     
     with open(f'{base_path}/eng_sent.txt', 'r', encoding='utf-8') as f:
         eng_lines = f.readlines()
@@ -84,8 +74,8 @@ def translate(messages, target_language: str):
 
 def run(output_file, n_shots, eng_lines, xmr_lines, tgt_lines, representation_type, target_language, directory):
     prefix = 'chin' if target_language.lower() == 'mandarin' else target_language.lower()[:4]
-    base_path = f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data'
-    with open(f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data/five_shot.json', 'r') as f:
+    base_path = f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data'
+    with open(f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data/five_shot.json', 'r') as f:
         all_indices = json.load(f)
     
     with open(f'{directory}/{output_file}', 'w', encoding='utf-8') as out:
@@ -107,8 +97,6 @@ def run(output_file, n_shots, eng_lines, xmr_lines, tgt_lines, representation_ty
             ]
             
             translation = translate(messages, target_language)
-            print('##############################')
-            print(translation + "\n")
             if i < len(eng_lines) - 1:
                 out.write(translation + "\n")
             else:
@@ -116,7 +104,7 @@ def run(output_file, n_shots, eng_lines, xmr_lines, tgt_lines, representation_ty
 
 ##### MAIN #####
 def main(target_language: str):
-    directory = f'results/mistral/{target_language.lower()}'
+    directory = f'results/gemma_12b/{target_language.lower()}'
     os.makedirs(directory, exist_ok=True)
     
     eng_lines, umr_lines, amr_lines, tgt_lines = load_data(target_language)
@@ -124,9 +112,9 @@ def main(target_language: str):
     shot_configs = [0, 1, 3, 5]
     
     for n_shots in shot_configs:
-        run(f'mistral_{n_shots}_shot.txt', n_shots, eng_lines, None, tgt_lines, None, target_language, directory)
-        run(f'mistral_{n_shots}_shot_umr.txt', n_shots, eng_lines, umr_lines, tgt_lines, 'Uniform Meaning Representation', target_language, directory)
-        run(f'mistral_{n_shots}_shot_amr.txt', n_shots, eng_lines, amr_lines, tgt_lines, 'Abstract Meaning Representation', target_language, directory)
+        run(f'gemma12b_{n_shots}_shot.txt', n_shots, eng_lines, None, tgt_lines, None, target_language, directory)
+        run(f'gemma12b_{n_shots}_shot_umr.txt', n_shots, eng_lines, umr_lines, tgt_lines, 'Uniform Meaning Representation', target_language, directory)
+        run(f'gemma12b_{n_shots}_shot_amr.txt', n_shots, eng_lines, amr_lines, tgt_lines, 'Abstract Meaning Representation', target_language, directory)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

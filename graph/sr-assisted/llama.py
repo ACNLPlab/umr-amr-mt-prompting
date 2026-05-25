@@ -13,13 +13,19 @@ model = AutoModelForCausalLM.from_pretrained(checkpoint, torch_dtype="auto", dev
 
 ##### OUTPUT CLEANING #####
 def extract_translated_text(response: str, target_language: str) -> str:
-    response = response.split(f"{target_language}:assistant\n\n", 1)[1].strip().splitlines()[0]
-    return response
+    response = response.split(f"{target_language}:assistant\n\n", 1)[1].strip()
+    lines = response.splitlines()
+    lines = [line.strip() for line in lines if line.strip()]
+    return " ".join(lines) if lines else ""
 
 ##### DATA PRE-PROCESSING #####
 def load_data(target_language: str):
-    prefix = 'chin' if target_language.lower() == 'mandarin' else target_language.lower()[:4]
-    base_path = f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data'
+    if target_language == "Mandarin":
+        prefix = "chin"
+    else:
+        prefix = target_language.lower()[:4]
+    
+    base_path = f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data'
     
     with open(f'{base_path}/eng_sent.txt', 'r', encoding='utf-8') as f:
         eng_lines = f.readlines()
@@ -49,14 +55,16 @@ def build_prompt(examples, representation_type, n_shots, target_language):
             prompt += f" {representation_type}: {xmr.strip()}"
         prompt += f" {target_language}: {tgt}"
     
-    prompt += "Translate the following English sentence"
-    if representation_type:
-        if representation_type == "Uniform Meaning Representation":
-            prompt += f" (accompanied by a {representation_type} parse)"
-        elif representation_type == "Abstract Meaning Representation":
-            prompt += f" (accompanied by an {representation_type} parse)"
-    prompt += f" into {target_language}. Please output ONLY the translation.\n"
-    
+    prompt += f"\nYour task is to translate the English sentence into {target_language} using the {representation_type} parse.\n\n"
+
+    prompt += "Instructions:\n"
+    prompt += "- Prioritize the English sentence.\n"
+    prompt += f"- The {representation_type} parse is provided only as a secondary aid.\n"
+    prompt += f"- Use the {representation_type} parse only if the meaning is unclear.\n"
+    prompt += f"- Please output ONLY the translation.\n\n"
+
+    prompt += f"Translate the following English sentence into {target_language}:\n"
+
     return prompt
 
 def translate(messages, target_language: str):
@@ -70,9 +78,13 @@ def translate(messages, target_language: str):
     return extract_translated_text(response, target_language)
 
 def run(output_file, n_shots, eng_lines, xmr_lines, tgt_lines, representation_type, target_language, directory):
-    prefix = 'chin' if target_language.lower() == 'mandarin' else target_language.lower()[:4]
-    base_path = f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data'
-    with open(f'/home/common/ACNLP/umr_applications/lpp/{prefix}_experiment_data/five_shot.json', 'r') as f:
+    if target_language == "Mandarin":
+        prefix = "chin"
+    else:
+        prefix = target_language.lower()[:4]
+
+    base_path = f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data'
+    with open(f'umr-amr-mt-prompting/lpp/{prefix}_experiment_data/five_shot.json', 'r') as f:
         all_indices = json.load(f)
     
     with open(f'{directory}/{output_file}', 'w', encoding='utf-8') as out:
@@ -94,8 +106,6 @@ def run(output_file, n_shots, eng_lines, xmr_lines, tgt_lines, representation_ty
             ]
             
             translation = translate(messages, target_language)
-            print('##############################')
-            print(translation + "\n")
             if i < len(eng_lines) - 1:
                 out.write(translation + "\n")
             else:
@@ -111,7 +121,6 @@ def main(target_language: str):
     shot_configs = [0, 1, 3, 5]
     
     for n_shots in shot_configs:
-        run(f'llama_{n_shots}_shot.txt', n_shots, eng_lines, None, tgt_lines, None, target_language, directory)
         run(f'llama_{n_shots}_shot_umr.txt', n_shots, eng_lines, umr_lines, tgt_lines, 'Uniform Meaning Representation', target_language, directory)
         run(f'llama_{n_shots}_shot_amr.txt', n_shots, eng_lines, amr_lines, tgt_lines, 'Abstract Meaning Representation', target_language, directory)
 
