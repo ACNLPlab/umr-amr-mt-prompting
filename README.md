@@ -19,6 +19,32 @@ pip install -r requirements.txt
 ```
 
 ## Repository Structure
+```
+├── graph/ # Graph-based experiments
+│   ├── sr-assisted/
+│   ├── sr-direct/
+│   ├── sr-grounded/
+├── nld/ # Natural language description-based experiments
+│   ├── descriptions/
+│   ├── sr-assisted/
+│   ├── sr-direct/
+│   ├── sr-grounded/
+│   ├── entity_mapping.json
+│   ├── relation_mapping.json
+│   ├── srllm.py
+├── lpp/ # Le Petit Prince (Little Prince) data
+│   ├── all_eng_amrs.txt
+│   ├── all_eng_sent.txt
+│   ├── all_eng_umrs.txt
+├── errorResults/ # Error analysis
+│   ├── errorHeat.py
+│   ├── errorHeat_perModel.py
+├── SENSE.py
+├── scraping.py
+├── .gitignore
+├── README.md
+├── requirements.txt
+```
 
 ## Citation
 If you find this work helpful, please cite:
