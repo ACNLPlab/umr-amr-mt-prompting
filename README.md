@@ -9,9 +9,12 @@ While in-context machine translation approaches lead to notable progress for low
 - [Citation](#citation)
 
 ## Installation
+
+Experiments are organized by *representation* (`graph` or `nld`), then *instruction type* (`sr-assisted`, `sr-direct`, or `sr-grounded`).
+
 ```bash
 git clone https://github.com/ACNLPlab/umr-amr-mt-prompting.git
-cd nld
+cd <representation_type>
 cd <instruction_type>
 
 conda activate <model_type>
