@@ -7,7 +7,7 @@ from tqdm import tqdm
 import json
 
 model_id = "google/gemma-3-12b-it"
-token = "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"
+token = os.environ.get("HF_TOKEN")
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(
