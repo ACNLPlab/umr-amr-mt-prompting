@@ -36,13 +36,13 @@ pip install -r requirements.txt
 │   ├── relation_mapping.json
 │   ├── srllm.py
 ├── lpp/ # Le Petit Prince (Little Prince) data
-│   ├── chin_experiment_data/ # Chinese data, an example of the format of the data
-│   ├── port_experiment_data/ # Portuguese data, an example of the format of the data
+│   ├── chin_experiment_data/
+│   ├── port_experiment_data/
 │   ├── all_eng_amrs.txt
 │   ├── all_eng_sent.txt
 │   ├── all_eng_umrs.txt
-│   ├── collect_shot.py # Collect the shots for the few-shot experiments
-│   ├── validate.py # Check that translations are one-to-one with the English sentences
+│   ├── collect_shot.py
+│   ├── validate.py
 │   ├── README.md
 ├── results/ # Translations (not included) and evaluation
 │   ├── eval.py
